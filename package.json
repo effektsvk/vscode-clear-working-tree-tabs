@@ -1,8 +1,13 @@
 {
   "name": "vscode-clear-working-tree-tabs",
-	"displayName": "Clear Working Tree Tabs",
-	"description": "Closes all Working Tree and Index tabs opened by Source Control",
+	"displayName": "Clear Working Tree Editor Tabs",
+	"description": "Closes all Working Tree and Index editor tabs opened by Source Control tab",
 	"version": "0.0.1",
+	"author": {
+		"name": "Erik Slovák",
+		"email": "erik.slovak7@gmail.com",
+		"url": "https://github.com/effeKtSVK"
+	},
 	"engines": {
 		"vscode": "^1.63.0"
 	},
@@ -10,14 +15,13 @@
 		"Other"
 	],
 	"activationEvents": [
-        "onCommand:vscode-clear-working-tree-tabs.helloWorld"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
 		"commands": [
 			{
-				"command": "vscode-clear-working-tree-tabs.helloWorld",
-				"title": "Hello World"
+				"command": "vscode-clear-working-tree-tabs.clearEditors",
+				"title": "Clear Working Tree and Index editors"
 			}
 		]
 	},
