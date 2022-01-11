@@ -18,6 +18,20 @@
 			"preLaunchTask": "${defaultBuildTask}"
 		},
 		{
+			"name": "Run Extension (with testing folder opened)",
+			"type": "extensionHost",
+			"request": "launch",
+			"args": [
+				"--extensionDevelopmentPath=${workspaceFolder}",
+				"-n",
+				"${env:TEST_FOLDER}"
+			],
+			"outFiles": [
+				"${workspaceFolder}/out/**/*.js"
+			],
+			"preLaunchTask": "${defaultBuildTask}"
+		},
+		{
 			"name": "Extension Tests",
 			"type": "extensionHost",
 			"request": "launch",
