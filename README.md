@@ -4,7 +4,7 @@ Close all those annoying tabs that are left after committing!
 
 ## Features
 
-- Command for closing all tabs that contain `Working Tree` or `Index` in the name. These are created by Source Control extension built into VS Code.
+- Command for closing all tabs (`Working Tree`, `Index`, etc.) created by Source Control extension built into VS Code.
 
 ## Development and contributing
 
