@@ -2,6 +2,23 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode'
 
+const waitForValue = async <VALUE>(value: () => (VALUE | undefined), timeout: number, startTime?: number): Promise<VALUE> => {
+	const start = startTime ?? Date.now()
+	return (
+		new Promise((resolve, reject) => {
+			const resolvedValue = value()
+			if (resolvedValue) {
+				resolve(resolvedValue)
+			} else {
+				setTimeout(() => waitForValue(value, timeout, start).then(resolve), 100)
+			}
+			if (start + timeout < Date.now()) {
+				reject('Failed to get value in time')
+			}
+		})
+	)
+}
+
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
@@ -28,12 +45,23 @@ export function activate(context: vscode.ExtensionContext) {
 		console.log(`Found ${tabs} tabs`)
 		console.log(`Found ${tabsToClose} tabs to close`)
 
+		if (tabsToClose === 0) {
+			vscode.window.showInformationMessage('No tabs are open')
+		}
+
 		while (tabsToClose > 0) {
-			if (vscode.window.activeTextEditor?.document.uri.scheme === 'git' || !vscode.window.activeTextEditor?.viewColumn) {
-				await vscode.commands.executeCommand('workbench.action.closeActiveEditor')
-				tabsToClose--
-			} else {
-				await vscode.commands.executeCommand('workbench.action.nextEditor')
+			try {
+				// HACK: activeTextEditor is undefined after tab is closing
+				const activeTextEditor = await waitForValue(() => vscode.window.activeTextEditor, 5000)
+	
+				if (vscode.window.activeTextEditor?.document.uri.scheme === 'git' || !activeTextEditor?.viewColumn) {
+					await vscode.commands.executeCommand('workbench.action.closeActiveEditor')
+					tabsToClose--
+				} else {
+					await vscode.commands.executeCommand('workbench.action.nextEditor')
+				}
+			} catch (error) {
+				vscode.window.showErrorMessage(`Failed to close all tabs: ${error}`)
 			}
 		}
 	})
