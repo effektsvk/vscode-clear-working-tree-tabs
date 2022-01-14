@@ -14,27 +14,28 @@ export function activate(context: vscode.ExtensionContext) {
 	// Now provide the implementation of the command with registerCommand
 	// The commandId parameter must match the command field in package.json
 	let disposable = vscode.commands.registerCommand('vscode-clear-working-tree-tabs.clearEditors', async () => {
-		// const initialActiveEditor = vscode.window.activeTextEditor
-
-		// TODO: figure out how to differentiate between editors and source control tabs
-		const editors = []
-		for (let index = 0; index < 4; index++) {
-			editors.push(vscode.window.activeTextEditor)
+		const initialActiveEditorHash = JSON.stringify(vscode.window.activeTextEditor)
+		// NOTE: first pass is to get the number of tabs
+		let tabs = 0
+		let tabsToClose = 0
+		do {
+			tabs++
+			if (vscode.window.activeTextEditor?.document.uri.scheme === 'git' || !vscode.window.activeTextEditor?.viewColumn) {
+				tabsToClose++
+			}
 			await vscode.commands.executeCommand('workbench.action.nextEditor')
+		} while (JSON.stringify(vscode.window.activeTextEditor) !== initialActiveEditorHash)
+		console.log(`Found ${tabs} tabs`)
+		console.log(`Found ${tabsToClose} tabs to close`)
+
+		while (tabsToClose > 0) {
+			if (vscode.window.activeTextEditor?.document.uri.scheme === 'git' || !vscode.window.activeTextEditor?.viewColumn) {
+				await vscode.commands.executeCommand('workbench.action.closeActiveEditor')
+				tabsToClose--
+			} else {
+				await vscode.commands.executeCommand('workbench.action.nextEditor')
+			}
 		}
-		console.log(editors)
-		console.log(editors.map(editor => editor?.document.getText()))
-		// if (initialActiveEditor) {
-		// 	while (true) {
-		// 		await vscode.commands.executeCommand('workbench.action.nextEditor')
-		// 		if (vscode.window.activeTextEditor?.document.uri.scheme === 'git') {
-		// 			vscode.commands.executeCommand('workbench.action.closeActiveEditor')
-		// 		}
-		// 		if (vscode.window.activeTextEditor === initialActiveEditor) {
-		// 			break
-		// 		}
-		// 	}
-		// }
 	})
 
 	context.subscriptions.push(disposable)
