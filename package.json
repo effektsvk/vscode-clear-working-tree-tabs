@@ -8,6 +8,11 @@
 		"email": "erik.slovak7@gmail.com",
 		"url": "https://github.com/effeKtSVK"
 	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/effektsvk/vscode-clear-working-tree-tabs"
+	},
+	"publisher": "effektsvk",
 	"engines": {
 		"vscode": "^1.63.0"
 	},
