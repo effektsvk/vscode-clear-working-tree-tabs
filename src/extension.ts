@@ -31,39 +31,68 @@ export function activate(context: vscode.ExtensionContext) {
 	// Now provide the implementation of the command with registerCommand
 	// The commandId parameter must match the command field in package.json
 	let disposable = vscode.commands.registerCommand('vscode-clear-working-tree-tabs.clearEditors', async () => {
-		const initialActiveEditorHash = JSON.stringify(vscode.window.activeTextEditor)
-		// NOTE: first pass is to get the number of tabs
-		let tabs = 0
-		let tabsToClose = 0
-		do {
-			tabs++
-			if (vscode.window.activeTextEditor?.document.uri.scheme === 'git' || !vscode.window.activeTextEditor?.viewColumn) {
-				tabsToClose++
-			}
-			await vscode.commands.executeCommand('workbench.action.nextEditor')
-		} while (JSON.stringify(vscode.window.activeTextEditor) !== initialActiveEditorHash)
-		console.log(`Found ${tabs} tabs`)
-		console.log(`Found ${tabsToClose} tabs to close`)
+		vscode.window.withProgress({
+			location: vscode.ProgressLocation.Notification,
+			cancellable: true,
+		}, async (progress, token) => {
+			let isRunning = true
+			token.onCancellationRequested(() => {
+				isRunning = false
+			})
+			progress.report({ message: 'Parsing tabs to close...' })
 
-		if (tabsToClose === 0) {
-			vscode.window.showInformationMessage('No tabs are open')
-		}
+			const initialActiveEditorHash = JSON.stringify(vscode.window.activeTextEditor)
 
-		while (tabsToClose > 0) {
-			try {
-				// HACK: activeTextEditor is undefined after tab is closing
-				const activeTextEditor = await waitForValue(() => vscode.window.activeTextEditor, 5000)
-	
-				if (vscode.window.activeTextEditor?.document.uri.scheme === 'git' || !activeTextEditor?.viewColumn) {
-					await vscode.commands.executeCommand('workbench.action.closeActiveEditor')
-					tabsToClose--
-				} else {
-					await vscode.commands.executeCommand('workbench.action.nextEditor')
+			// NOTE: first pass is to get the number of tabs
+			let tabs = 0
+			let tabsToClose = 0
+			do {
+				if (!isRunning || !initialActiveEditorHash) {
+					break
 				}
-			} catch (error) {
-				vscode.window.showErrorMessage(`Failed to close all tabs: ${error}`)
+				tabs++
+				if (vscode.window.activeTextEditor?.document.uri.scheme === 'git' || !vscode.window.activeTextEditor?.viewColumn) {
+					tabsToClose++
+				}
+				await vscode.commands.executeCommand('workbench.action.nextEditor')
+			} while (JSON.stringify(vscode.window.activeTextEditor) !== initialActiveEditorHash)
+
+			const increment = 100 / tabsToClose
+
+			console.log(`Found ${tabs} tabs`)
+			console.log(`Found ${tabsToClose} tabs to close`)
+	
+			if (tabs === 0) {
+				vscode.window.showInformationMessage('No tabs are open')
+			} else if (tabsToClose === 0) {
+				vscode.window.showInformationMessage('No tabs to close')
 			}
-		}
+	
+			while (tabsToClose > 0) {
+				if (!isRunning) {
+					break
+				}
+				try {
+					// HACK: activeTextEditor is undefined after tab is closing
+					const activeTextEditor = await waitForValue(() => vscode.window.activeTextEditor, 5000)
+		
+					if (vscode.window.activeTextEditor?.document.uri.scheme === 'git' || !activeTextEditor?.viewColumn) {
+						await vscode.commands.executeCommand('workbench.action.closeActiveEditor')
+						tabsToClose--
+						if (tabsToClose > 0) {
+							progress.report({ increment, message: 'Closing tabs...' })
+						} else {
+							return Promise.resolve()
+						}
+					} else {
+						await vscode.commands.executeCommand('workbench.action.nextEditor')
+					}
+				} catch (error) {
+					vscode.window.showErrorMessage(`Failed to close all tabs: ${error}`)
+					return Promise.reject(error)
+				}
+			}
+		})
 	})
 
 	context.subscriptions.push(disposable)
