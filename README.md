@@ -1,4 +1,4 @@
-# vscode-clear-working-tree-tabs [WIP: Not functioning yet]
+# vscode-clear-working-tree-tabs
 
 Close all those annoying tabs that are left after committing!
 
