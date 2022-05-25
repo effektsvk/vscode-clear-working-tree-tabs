@@ -19,6 +19,10 @@ const waitForValue = async <VALUE>(value: () => (VALUE | undefined), timeout: nu
 	)
 }
 
+const sleep = async (ms: number): Promise<void> => {
+	return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
@@ -55,6 +59,8 @@ export function activate(context: vscode.ExtensionContext) {
 					tabsToClose++
 				}
 				await vscode.commands.executeCommand('workbench.action.nextEditor')
+				// NOTE: this is a hack to wait for the next editor to be loaded
+				await sleep(50)
 			} while (JSON.stringify(vscode.window.activeTextEditor) !== initialActiveEditorHash)
 
 			const increment = 100 / tabsToClose
